@@ -4,16 +4,30 @@ use std::fs;
 fn main() {
     let args: Vec<String> = env::args().collect();
 
+    let config = parse_config(&args);
+
+    println!("Searching for {}", config.query);
+    println!("In file {}", config.file_path);
+
+    let contents =
+        fs::read_to_string(config.file_path).expect("Should've been able to read the file");
+
+    println!("With text:\n{}", contents);
+}
+
+struct Config {
+    query: String,
+    file_path: String,
+}
+
+fn parse_config(args: &[String]) -> Config {
     //&args[0] returns the program name
     //e.g. running through cargo run returns
     //     the value "target/debug/minigrep"
-    let query = &args[1];
-    let file_path = &args[2];
+    //let query = &args[1];
+    let query = args[1].clone();
+    //let file_path = &args[2];
+    let file_path = args[2].clone();
 
-    println!("Searching for {}", query);
-    println!("In file {}", file_path);
-
-    let contents = fs::read_to_string(file_path).expect("Should've been able to read the file");
-
-    println!("With text:\n{}", contents);
+    Config { query, file_path }
 }
