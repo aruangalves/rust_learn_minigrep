@@ -47,15 +47,39 @@ impl Config {
         if args.len() < 3 {
             return Err("not enough arguments");
         }
+
+        let mut ignore_case = env::var("IGNORE_CASE").is_ok();
+        let more_args: bool;
+
+        match args[1].as_str() {
+            "-i" | "--ignore_case" => {
+                ignore_case = true;
+                more_args = true;
+            }
+            _ => {
+                more_args = false;
+            }
+        }
+
+        if more_args && args.len() < 4 {
+            return Err("not enough arguments");
+        }
+
         //&args[0] returns the program name
         //e.g. running through cargo run returns
         //     the value "target/debug/minigrep"
         //let query = &args[1];
-        let query = args[1].clone();
+        let query = if more_args {
+            args[2].clone()
+        } else {
+            args[1].clone()
+        };
         //let file_path = &args[2];
-        let file_path = args[2].clone();
-
-        let ignore_case = env::var("IGNORE_CASE").is_ok();
+        let file_path = if more_args {
+            args[3].clone()
+        } else {
+            args[2].clone()
+        };
 
         Ok(Config {
             query,
