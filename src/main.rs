@@ -7,10 +7,8 @@ use minigrep::search;
 use minigrep::search_case_insensitive;
 
 fn main() {
-    let args: Vec<String> = env::args().collect();
-
-    let config = Config::build(&args).unwrap_or_else(|err| {
-        eprintln!("Problem parsing arguments: {}", err);
+    let config = Config::build(env::args()).unwrap_or_else(|err| {
+        eprintln!("Problem parsing arguments: {err}");
         process::exit(1);
     });
 
@@ -43,15 +41,21 @@ pub struct Config {
 }
 
 impl Config {
-    fn build(args: &[String]) -> Result<Config, &'static str> {
-        if args.len() < 3 {
-            return Err("not enough arguments");
-        }
+    fn build(mut args: impl Iterator<Item = String>) -> Result<Config, &'static str> {
+        //&args[0] returns the program name
+        //e.g. running through cargo run returns
+        //     the value "target/debug/minigrep"
+        args.next();
+
+        let args1 = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Not enough arguments"),
+        };
 
         let mut ignore_case = env::var("IGNORE_CASE").is_ok();
         let more_args: bool;
 
-        match args[1].as_str() {
+        match args1.as_str() {
             "-i" | "--ignore_case" => {
                 ignore_case = true;
                 more_args = true;
@@ -61,30 +65,28 @@ impl Config {
             }
         }
 
-        if more_args && args.len() < 4 {
-            return Err("not enough arguments");
+        let args2 = match args.next() {
+            Some(arg) => arg,
+            None => return Err("Not enough arguments"),
+        };
+
+        if more_args {
+            let args3 = match args.next() {
+                Some(arg) => arg,
+                None => return Err("Not enough arguments"),
+            };
+
+            Ok(Config {
+                query: args2,
+                file_path: args3,
+                ignore_case,
+            })
+        } else {
+            Ok(Config {
+                query: args1,
+                file_path: args2,
+                ignore_case,
+            })
         }
-
-        //&args[0] returns the program name
-        //e.g. running through cargo run returns
-        //     the value "target/debug/minigrep"
-        //let query = &args[1];
-        let query = if more_args {
-            args[2].clone()
-        } else {
-            args[1].clone()
-        };
-        //let file_path = &args[2];
-        let file_path = if more_args {
-            args[3].clone()
-        } else {
-            args[2].clone()
-        };
-
-        Ok(Config {
-            query,
-            file_path,
-            ignore_case,
-        })
     }
 }
